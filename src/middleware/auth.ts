@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwt";
 
 export const protect = (req: Request, res: Response, next: NextFunction) => {
+  
   try {
+   
     const rawAuth = req.headers.authorization;
     if (!rawAuth) return res.status(401).json({ error: "missing token" });
     // headers can be string | string[]; normalize to a definite string
