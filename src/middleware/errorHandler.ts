@@ -18,7 +18,7 @@ export const errorHandler = (
       message = err.message;
     } else {
       // Production မှာတော့ အပြင်လူကို အမှားအသေးစိတ် မမြင်စေချင်လို့ ဖုံးကွယ်ထားမယ်
-      message = "တစ်ခုခုမှားယွင်းနေပါသည်၊ ခေတ္တစောင့်ပြီးမှ ပြန်လည်ကြိုးစားပါ";
+      message = "something went wrong. Please try again later.";
     }
   }
 

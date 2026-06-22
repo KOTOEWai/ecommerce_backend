@@ -12,8 +12,196 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
+
+
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  phone        String?
+  role         Role?     @relation(fields: [roleId], references: [id])
+  roleId       String?
+  
+  addresses    Address[]
+  carts        Cart[]
+  orders       Order[]
+  reviews      Review[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Role {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  label      String?
+  line1      String
+  line2      String?
+  city       String
+  state      String?
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  // ✅ Order ဘက်က ချိတ်ဆက်မှုအတွက် ပြန်လည်ကြေညာခြင်း
+  shippingOrders Order[] @relation("OrderShipping")
+  billingOrders  Order[] @relation("OrderBilling")
+}
+
+model Category {
+  id       String     @id @default(uuid())
+  name     String     @unique
+  slug     String     @unique
+  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  parentId String?
+  children Category[] @relation("CategoryParent")
+  products Product[]
+}
+
+model Product {
+  id          String           @id @default(uuid())
+  sku         String           @unique
+  name        String
+  slug        String           @unique
+  description String?
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+  variants    ProductVariant[]
+  images      ProductImage[]
+  status      String           @default("active")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ProductVariant {
+  id         String         @id @default(uuid())
+  product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  sku        String         @unique
+  title      String?
+  price      Decimal?
+  attributes Json?
+  inventory  Inventory?
+  images     ProductImage[]
+
+  // ✅ CartItem နှင့် OrderItem တို့အတွက် ပြန်လည်ကြေညာခြင်း
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model ProductImage {
+  id        String          @id @default(uuid())
+  product   Product?        @relation(fields: [productId], references: [id])
+  productId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId String?
+  url       String
+  altText   String?
+  sortOrder Int             @default(0)
+}
+
+model Inventory {
+  id        String         @id @default(uuid())
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  variantId String         @unique
+  quantity  Int            @default(0)
+  reserved  Int            @default(0)
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  user      User?      @relation(fields: [userId], references: [id])
+  userId    String?
+  sessionId String?
+  items     CartItem[]
+  status    String     @default("active")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String         @id @default(uuid())
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variantId String
+  quantity  Int
+  unitPrice Decimal
+
+  @@unique([cartId, variantId])
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  user              User?       @relation(fields: [userId], references: [id])
+  userId            String?
+  shippingAddress   Address?    @relation("OrderShipping", fields: [shippingAddressId], references: [id])
+  shippingAddressId String?
+  billingAddress    Address?    @relation("OrderBilling", fields: [billingAddressId], references: [id])
+  billingAddressId  String?
+  items             OrderItem[]
+  totalAmount       Decimal
+  currency          String      @default("USD")
+  status            String      @default("pending")
+  placedAt          DateTime    @default(now())
+
+  // ✅ Payment အတွက် ပြန်လည်ကြေညာခြင်း
+  payments Payment[]
+}
+
+model OrderItem {
+  id          String         @id @default(uuid())
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     String
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+  variantId   String
+  productName String
+  sku         String
+  unitPrice   Decimal
+  quantity    Int
+  lineTotal   Decimal
+}
+
+// Payment Provider အသစ်ဆောက်ခြင်း
+model PaymentProvider {
+  id        String    @id @default(uuid())
+  name      String    @unique // ဥပမာ: "KBZPay", "Stripe"
+  isActive  Boolean   @default(true)
+  payments  Payment[]
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId           String
+  
+  // Provider နဲ့ ချိတ်ဆက်ခြင်း
+  providerId        String
+  provider          PaymentProvider @relation(fields: [providerId], references: [id])
+  
+  providerPaymentId String?
+  amount            Decimal
+  currency          String
+  status            String
+  response          Json?
+  createdAt         DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
 }

@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import userRoutes from './routes/userRoute';
 import authRoutes from './routes/authRoute';
+import roleRoutes from './routes/roleRoute';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
@@ -30,6 +31,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use("/api/auth", authRoutes );
 app.use("/api/users", userRoutes );
+app.use("/api/roles", roleRoutes );
 
 app.get('/api/test', (req, res) => {
     console.log(req.headers); // 👈 Terminal တွင် Object အကြီးကြီး ထွက်လာမည်

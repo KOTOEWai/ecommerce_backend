@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { AppError } from "../utils/customError";
 
 export type CreateUserInput = {
   email: string;
@@ -19,6 +20,8 @@ export const createUser = async (input: CreateUserInput) => {
 
   try {
     return await prisma.$transaction(async (tx) => {
+      //Transaction ဆိုတာ "အလုပ်တွေ အကုန်အောင်မြင်မှ Save မယ်၊ တစ်ခုခုမှားရင် အကုန် ပြန်ဖျက်မယ်" ဆိုတဲ့ သဘောပါ။
+     //ဒီနေရာမှာ Role ကို ရှာတယ်၊ ပြီးမှ User ကို Create လုပ်တယ်။ တကယ်လို့ User Create လုပ်တဲ့နေရာမှာ Error တက်ခဲ့ရင် ခုနက ရှာထားတဲ့ Role အချက်အလက်တွေပါ အလကားဖြစ်သွားအောင် သူက စောင့်ကြည့်ပေးပါတယ်။
       // resolve role if provided (by name)
       let roleId: string | undefined;
       if (input.role) {
@@ -47,7 +50,7 @@ export const createUser = async (input: CreateUserInput) => {
   } catch (err: unknown) {
     // Prisma unique constraint error code is P2002
     if (typeof err === "object" && err !== null && "code" in err && (err as any).code === "P2002") {
-      throw new Error("email already in use");
+      throw new AppError("email already exists", 400);
     }
     throw err;
   }

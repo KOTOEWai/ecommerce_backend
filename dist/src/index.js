@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const userRoute_1 = __importDefault(require("./routes/userRoute"));
 const authRoute_1 = __importDefault(require("./routes/authRoute"));
+const roleRoute_1 = __importDefault(require("./routes/roleRoute"));
 const morgan_1 = __importDefault(require("morgan"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const errorHandler_1 = require("./middleware/errorHandler");
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 });
 app.use("/api/auth", authRoute_1.default);
 app.use("/api/users", userRoute_1.default);
+app.use("/api/roles", roleRoute_1.default);
 app.get('/api/test', (req, res) => {
     console.log(req.headers); // 👈 Terminal တွင် Object အကြီးကြီး ထွက်လာမည်
     res.send("စစ်ဆေးပြီးပါပြီ");

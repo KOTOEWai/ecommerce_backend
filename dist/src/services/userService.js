@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUser = exports.updateUser = exports.listUsers = exports.findUserById = exports.findUserByEmail = exports.createUser = void 0;
 const prisma_1 = require("../../lib/prisma");
+const customError_1 = require("../utils/customError");
 const createUser = async (input) => {
     // normalize
     const email = input.email.trim().toLowerCase();
@@ -11,6 +12,8 @@ const createUser = async (input) => {
     }
     try {
         return await prisma_1.prisma.$transaction(async (tx) => {
+            //Transaction ဆိုတာ "အလုပ်တွေ အကုန်အောင်မြင်မှ Save မယ်၊ တစ်ခုခုမှားရင် အကုန် ပြန်ဖျက်မယ်" ဆိုတဲ့ သဘောပါ။
+            //ဒီနေရာမှာ Role ကို ရှာတယ်၊ ပြီးမှ User ကို Create လုပ်တယ်။ တကယ်လို့ User Create လုပ်တဲ့နေရာမှာ Error တက်ခဲ့ရင် ခုနက ရှာထားတဲ့ Role အချက်အလက်တွေပါ အလကားဖြစ်သွားအောင် သူက စောင့်ကြည့်ပေးပါတယ်။
             // resolve role if provided (by name)
             let roleId;
             if (input.role) {
@@ -38,7 +41,7 @@ const createUser = async (input) => {
     catch (err) {
         // Prisma unique constraint error code is P2002
         if (typeof err === "object" && err !== null && "code" in err && err.code === "P2002") {
-            throw new Error("email already in use");
+            throw new customError_1.AppError("email already exists", 400);
         }
         throw err;
     }
